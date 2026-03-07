@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { ensureDbInitialized } from "./db-init";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true, // Vercel/プロキシ環境での必須設定
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -15,12 +16,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        // Vercel環境でDB初期化を保証
-        await ensureDbInitialized().catch(() => null);
+        // DB初期化（Vercel環境でテーブルが存在しない場合に自動作成）
+        await ensureDbInitialized().catch((e) =>
+          console.error("DB init error:", e)
+        );
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
+        const user = await prisma.user
+          .findUnique({ where: { email: credentials.email as string } })
+          .catch((e) => {
+            console.error("User lookup error:", e);
+            return null;
+          });
 
         if (!user) return null;
 
@@ -62,5 +68,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
 });

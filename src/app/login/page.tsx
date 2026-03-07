@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,19 +16,31 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: "/dashboard",
+      });
 
-    setLoading(false);
-
-    if (result?.error) {
-      setError("メールアドレスまたはパスワードが正しくありません。");
-    } else {
-      router.push("/dashboard");
-      router.refresh();
+      if (result?.error) {
+        setError(
+          result.error === "CredentialsSignin"
+            ? "メールアドレスまたはパスワードが正しくありません。"
+            : `ログインに失敗しました: ${result.error}`
+        );
+      } else if (result?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        setError("予期しないエラーが発生しました。再度お試しください。");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("通信エラーが発生しました。ページを再読み込みしてお試しください。");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,7 +118,6 @@ export default function LoginPage() {
                 fontSize: "0.95rem",
                 outline: "none",
                 boxSizing: "border-box",
-                transition: "border-color 0.2s",
               }}
               onFocus={(e) => (e.target.style.borderColor = "#6366f1")}
               onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
@@ -155,6 +166,7 @@ export default function LoginPage() {
                 color: "#dc2626",
                 fontSize: "0.875rem",
                 marginBottom: "16px",
+                lineHeight: 1.5,
               }}
             >
               {error}
@@ -167,20 +179,22 @@ export default function LoginPage() {
             style={{
               width: "100%",
               padding: "12px",
-              background: loading ? "#a5b4fc" : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+              background: loading
+                ? "#a5b4fc"
+                : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
               color: "white",
               border: "none",
               borderRadius: "8px",
               fontSize: "1rem",
               fontWeight: 600,
               cursor: loading ? "not-allowed" : "pointer",
-              transition: "opacity 0.2s",
             }}
           >
             {loading ? "ログイン中..." : "ログイン"}
           </button>
         </form>
 
+        {/* デモアカウント情報 */}
         <div
           style={{
             marginTop: "24px",
@@ -189,15 +203,64 @@ export default function LoginPage() {
             borderRadius: "8px",
             fontSize: "0.8rem",
             color: "#64748b",
+            lineHeight: 1.7,
           }}
         >
-          <strong>デモアカウント：</strong>
-          <br />
-          管理者: admin@example.com / admin123
-          <br />
-          メンバー: tanaka@example.com / member123
+          <strong style={{ color: "#374151" }}>デモアカウント</strong>
+          <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <DemoButton
+              label="管理者でログイン"
+              email="admin@example.com"
+              password="admin123"
+              color="#6366f1"
+              onSelect={(e, p) => { setEmail(e); setPassword(p); }}
+            />
+            <DemoButton
+              label="メンバーでログイン"
+              email="tanaka@example.com"
+              password="member123"
+              color="#22c55e"
+              onSelect={(e, p) => { setEmail(e); setPassword(p); }}
+            />
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function DemoButton({
+  label,
+  email,
+  password,
+  color,
+  onSelect,
+}: {
+  label: string;
+  email: string;
+  password: string;
+  color: string;
+  onSelect: (email: string, password: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(email, password)}
+      style={{
+        background: `${color}10`,
+        border: `1px solid ${color}30`,
+        borderRadius: "6px",
+        padding: "8px 12px",
+        textAlign: "left",
+        cursor: "pointer",
+        fontSize: "0.78rem",
+        color: "#374151",
+        lineHeight: 1.5,
+      }}
+    >
+      <span style={{ fontWeight: 600, color }}>{label}</span>
+      <br />
+      {email} / {password}
+    </button>
   );
 }
