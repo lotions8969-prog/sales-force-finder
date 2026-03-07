@@ -1,0 +1,109 @@
+// Prisma schema for Sales Assessment Tool
+// SQLite for local dev; switch provider to "postgresql" for production
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("member") // "admin" | "member"
+  teamId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team     Team?               @relation(fields: [teamId], references: [id])
+  sessions AssessmentSession[]
+
+  @@map("users")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members User[]
+
+  @@map("teams")
+}
+
+model AssessmentSession {
+  id          String    @id @default(cuid())
+  userId      String
+  status      String    @default("in_progress") // "in_progress" | "completed"
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user                       User                        @relation(fields: [userId], references: [id])
+  responses                  ItemResponse[]
+  scoreProfiles              ScoreProfile[]
+  roleFitResults             RoleFitResult[]
+  developmentRecommendations DevelopmentRecommendation[]
+
+  @@map("assessment_sessions")
+}
+
+model ItemResponse {
+  id            String   @id @default(cuid())
+  sessionId     String
+  questionId    String
+  questionType  String   // "likert" | "forced_choice" | "sjt"
+  responseValue String   // JSON-encoded response value
+  createdAt     DateTime @default(now())
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("item_responses")
+}
+
+model ScoreProfile {
+  id                String   @id @default(cuid())
+  sessionId         String
+  factorKey         String
+  rawScore          Float
+  standardizedScore Float    // 0-100 scale
+  percentile        Float?
+  createdAt         DateTime @default(now())
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, factorKey])
+  @@map("score_profiles")
+}
+
+model RoleFitResult {
+  id        String   @id @default(cuid())
+  sessionId String
+  roleKey   String
+  fitScore  Float    // 0-100
+  rank      Int
+  createdAt DateTime @default(now())
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, roleKey])
+  @@map("role_fit_results")
+}
+
+model DevelopmentRecommendation {
+  id        String   @id @default(cuid())
+  sessionId String
+  type      String   // "strength" | "growth" | "action" | "risk" | "style" | "manager_tip"
+  content   String
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("development_recommendations")
+}
