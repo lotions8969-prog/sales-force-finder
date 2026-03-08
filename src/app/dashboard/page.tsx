@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ensureDbInitialized } from "@/lib/db-init";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FACTOR_DEFINITIONS } from "@/data/factor-definitions";
@@ -11,19 +12,21 @@ export default async function DashboardPage() {
   const userId = (session.user as { id?: string }).id!;
   const userRole = (session.user as { role?: string }).role;
 
+  await ensureDbInitialized().catch(() => null);
+
   // 最新セッションを取得
   const latestSession = await prisma.assessmentSession.findFirst({
     where: { userId, status: "completed" },
     orderBy: { completedAt: "desc" },
     include: { scoreProfiles: true, roleFitResults: true },
-  });
+  }).catch(() => null);
 
   // チーム全体の完了済みセッション数
   const totalCompleted = await prisma.assessmentSession.count({
     where: { status: "completed" },
-  });
+  }).catch(() => 0);
 
-  const totalMembers = await prisma.user.count({ where: { role: "member" } });
+  const totalMembers = await prisma.user.count({ where: { role: "member" } }).catch(() => 0);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
