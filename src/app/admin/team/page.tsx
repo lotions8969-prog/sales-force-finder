@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ensureDbInitialized } from "@/lib/db-init";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FACTOR_DEFINITIONS } from "@/data/factor-definitions";
@@ -9,7 +8,6 @@ import type { FactorKey, RoleKey } from "@/types";
 import TeamRadarChart from "./TeamRadarChart";
 
 export default async function AdminTeamPage() {
-  await ensureDbInitialized().catch(() => null);
   const session = await auth();
   if (!session?.user) redirect("/login");
   if ((session.user as { role?: string }).role !== "admin") redirect("/dashboard");

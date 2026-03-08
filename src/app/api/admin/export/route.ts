@@ -1,13 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ensureDbInitialized } from "@/lib/db-init";
 import { NextResponse } from "next/server";
 import { FACTOR_DEFINITIONS } from "@/data/factor-definitions";
 import { ROLE_DEFINITIONS } from "@/data/role-definitions";
 import type { FactorKey, RoleKey } from "@/types";
 
 export async function GET(req: Request) {
-  await ensureDbInitialized().catch(() => null);
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

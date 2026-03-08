@@ -1,11 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ensureDbInitialized } from "@/lib/db-init";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function AdminMembersPage() {
-  await ensureDbInitialized().catch(() => null);
   const session = await auth();
   if (!session?.user) redirect("/login");
   if ((session.user as { role?: string }).role !== "admin") redirect("/dashboard");

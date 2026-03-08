@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ensureDbInitialized } from "@/lib/db-init";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FACTOR_DEFINITIONS } from "@/data/factor-definitions";
@@ -13,7 +12,6 @@ export default async function ResultsPage({
 }: {
   params: Promise<{ sessionId: string }>;
 }) {
-  await ensureDbInitialized().catch(() => null);
   const session = await auth();
   if (!session?.user) redirect("/login");
 

@@ -1,12 +1,10 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ensureDbInitialized } from "@/lib/db-init";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 // メンバー追加（管理者のみ）
 export async function POST(req: Request) {
-  await ensureDbInitialized().catch(() => null);
   const session = await auth();
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -42,7 +40,6 @@ export async function POST(req: Request) {
 
 // メンバー一覧取得（管理者のみ）
 export async function GET() {
-  await ensureDbInitialized().catch(() => null);
   const session = await auth();
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
