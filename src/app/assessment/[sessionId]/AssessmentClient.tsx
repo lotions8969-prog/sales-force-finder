@@ -84,21 +84,27 @@ export default function AssessmentClient({ sessionId }: { sessionId: string }) {
     setSubmitting(true);
     setError("");
 
-    const res = await fetch(`/api/assessment/${sessionId}/complete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ responses: finalResponses }),
-    });
+    try {
+      const res = await fetch(`/api/assessment/${sessionId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responses: finalResponses }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error ?? "送信中にエラーが発生しました");
+      if (!res.ok) {
+        setError(data.error ?? "送信中にエラーが発生しました");
+        setSubmitting(false);
+        return;
+      }
+
+      router.push(`/results/${sessionId}`);
+    } catch (err) {
+      console.error("Submit error:", err);
+      setError("送信中にエラーが発生しました。ページを再読み込みしてお試しください。");
       setSubmitting(false);
-      return;
     }
-
-    router.push(`/results/${sessionId}`);
   };
 
   if (submitting) {
