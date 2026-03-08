@@ -99,6 +99,15 @@ export default function AssessmentClient({ sessionId }: { sessionId: string }) {
         return;
       }
 
+      // 計算結果をlocalStorageに保存（DBに依存せず結果ページで表示するため）
+      if (data.results) {
+        try {
+          localStorage.setItem(`assessment_result_${sessionId}`, JSON.stringify(data.results));
+        } catch {
+          // localStorage失敗は無視
+        }
+      }
+
       router.push(`/results/${sessionId}`);
     } catch (err) {
       console.error("Submit error:", err);
