@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./db";
 import bcrypt from "bcryptjs";
+import { ensureDbInitialized } from "./db-init";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true, // Vercel/プロキシ環境での必須設定
@@ -14,6 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        await ensureDbInitialized().catch(() => null);
 
         const user = await prisma.user
           .findUnique({ where: { email: credentials.email as string } })
