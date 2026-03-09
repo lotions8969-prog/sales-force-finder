@@ -24,7 +24,7 @@ export default async function AdminMembersPage() {
       },
     },
     orderBy: { createdAt: "asc" },
-  });
+  }).catch(() => []);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>

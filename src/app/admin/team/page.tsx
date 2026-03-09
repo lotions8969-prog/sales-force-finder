@@ -24,9 +24,9 @@ export default async function AdminTeamPage() {
       roleFitResults: { orderBy: { rank: "asc" }, take: 1 },
     },
     orderBy: { completedAt: "desc" },
-  });
+  }).catch(() => []);
 
-  const totalMembers = await prisma.user.count({ where: { role: "member" } });
+  const totalMembers = await prisma.user.count({ where: { role: "member" } }).catch(() => 0);
 
   // チーム平均スコアを計算
   const factorKeys = Object.keys(FACTOR_DEFINITIONS) as FactorKey[];

@@ -12,16 +12,21 @@ export default function StartAssessmentButton() {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/assessment/start", { method: "POST" });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/assessment/start", { method: "POST" });
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error ?? "エラーが発生しました");
+      if (!res.ok) {
+        setError(data.error ?? "エラーが発生しました");
+        setLoading(false);
+        return;
+      }
+
+      router.push(`/assessment/${data.sessionId}`);
+    } catch {
+      setError("通信エラーが発生しました。再度お試しください。");
       setLoading(false);
-      return;
     }
-
-    router.push(`/assessment/${data.sessionId}`);
   };
 
   return (

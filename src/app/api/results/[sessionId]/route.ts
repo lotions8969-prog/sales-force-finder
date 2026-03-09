@@ -17,23 +17,28 @@ export async function GET(
   const userId = (session.user as { id?: string }).id!;
   const userRole = (session.user as { role?: string }).role;
 
-  const assessmentSession = await prisma.assessmentSession.findFirst({
-    where: {
-      id: sessionId,
-      // 管理者は全セッション閲覧可
-      ...(userRole !== "admin" ? { userId } : {}),
-    },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-      scoreProfiles: true,
-      roleFitResults: { orderBy: { rank: "asc" } },
-      developmentRecommendations: { orderBy: { priority: "asc" } },
-    },
-  });
+  try {
+    const assessmentSession = await prisma.assessmentSession.findFirst({
+      where: {
+        id: sessionId,
+        // 管理者は全セッション閲覧可
+        ...(userRole !== "admin" ? { userId } : {}),
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        scoreProfiles: true,
+        roleFitResults: { orderBy: { rank: "asc" } },
+        developmentRecommendations: { orderBy: { priority: "asc" } },
+      },
+    });
 
-  if (!assessmentSession) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    if (!assessmentSession) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(assessmentSession);
+  } catch (e) {
+    console.error("Results fetch error:", e);
+    return NextResponse.json({ error: "結果取得に失敗しました" }, { status: 500 });
   }
-
-  return NextResponse.json(assessmentSession);
 }

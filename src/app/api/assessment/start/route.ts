@@ -12,10 +12,14 @@ export async function POST() {
 
   const userId = (session.user as { id?: string }).id!;
 
-  // 新しいセッションを作成
-  const assessmentSession = await prisma.assessmentSession.create({
-    data: { userId },
-  });
-
-  return NextResponse.json({ sessionId: assessmentSession.id });
+  try {
+    // 新しいセッションを作成
+    const assessmentSession = await prisma.assessmentSession.create({
+      data: { userId },
+    });
+    return NextResponse.json({ sessionId: assessmentSession.id });
+  } catch (e) {
+    console.error("Assessment start error:", e);
+    return NextResponse.json({ error: "セッション作成に失敗しました" }, { status: 500 });
+  }
 }
